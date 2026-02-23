@@ -31,7 +31,7 @@ print(df.head())
 
 
 ###############################################################################################################
-#  STEP 2 : Data analysis and visualization(EDA) 
+#  STEP 2 : Data analysis 
 ###############################################################################################################
 
 print(border)
@@ -50,3 +50,24 @@ print(df['species'].value_counts())
 
 print("statistical summary of the dataset : ")
 print(df.describe())
+
+###############################################################################################################
+#  STEP : 3 Decide independent and dependent variable
+###############################################################################################################
+
+print(border)
+print("STEP : 3 Decide independent and dependent variable")
+print(border)
+
+#X : independent variable (features)
+#y : dependent variable (labels)
+
+Feature_calls = ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
+X = df[Feature_calls] # Independent variables (features)
+y = df["species"]
+
+print("X(independent variable) shape : ", X.shape)
+print("y(dependent variable) shape : ", y.shape)
+ #output
+ #X(independent variable) shape :  (150, 4)
+ #y(dependent variable) shape :  (150,) over here the nothing after 150  means that it is a one dimensional array with 150 entries which are the species labels for each of the 150 samples in the dataset.
