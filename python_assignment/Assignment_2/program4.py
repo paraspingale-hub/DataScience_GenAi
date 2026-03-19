@@ -1,0 +1,5 @@
+a = float(input("Enter the first nos"))
+b= float(input("Enter the secounf nos")) 
+print(a * b)
+print(a + b)
+print(a - b)
