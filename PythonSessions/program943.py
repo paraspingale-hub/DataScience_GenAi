@@ -1,6 +1,6 @@
+def main():
 
-def main ():
-    for i in range(10):
-        print("Jay ganesh ...")
-        
+    for i in range(5):
+        print("Jay Ganesh...")
+
 main()

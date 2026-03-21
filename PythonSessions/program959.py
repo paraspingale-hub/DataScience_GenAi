@@ -1,53 +1,12 @@
-def main ():
-    size = 0
-    arr = []
-    
-    arr.append(11)
-    arr.append(21)
-    arr.append(51)
-    print(arr)
-    
-    
-    
+def main():
+    Size = 0
+    Arr = []    # int *Arr = (int *)malloc(sizeof(int). * size);
 
+    Arr.append(11)
+    Arr.append(21)
+    Arr.append(51)
+    Arr.append(101)
     
-
-        
-        
+    print(Arr)
     
 main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

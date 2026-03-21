@@ -1,51 +1,10 @@
-def display(arr):
-        for no in arr:
-            print(no)
-    
-def main ():
-    arr = [10 , 20.5 , "30" , True ,50]
-    display(arr)
-    
-    
+def Display(Brr):
+    for no in Brr:
+        print(no)
 
-    
+def main():
+    Arr = [10,20,30,40,50]
 
-        
-        
+    Display(Arr)
     
 main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

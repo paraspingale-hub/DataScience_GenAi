@@ -1,48 +1,7 @@
+def main():
+    Arr = [10,20,30,40,50]
 
-def main ():
-    arr = [10 , 20.5 , "30" , True ,50]
-
-    
-    for no in arr:
+    for no in Arr:
         print(no)
     
-
-        
-        
-    
 main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

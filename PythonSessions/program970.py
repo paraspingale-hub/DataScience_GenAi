@@ -1,15 +1,22 @@
-def SmallString(brr):
-    smallstr = []
-    for i in range (len(brr)):
-        if(brr[i] >= 'a'and brr[i] <= 'z'):
-            smallstr.append(brr[i])
-    print(smallstr)
-            
+# HeLlo -> elo
+# HELLO -> 
+# hello -> hello
 
-def main ():
-    print("Enter string")
-    
-    arr = input()
-    SmallString(arr)
-    
+def CopySmall(Brr):
+    Result = ""
+
+    for ch in Brr:
+        if(ch >= 'a' and ch <= 'z'):
+            Result = Result + ch
+
+    return Result
+
+def main():
+    print("Enter string : ")
+    Arr = input() 
+
+    Ret = CopySmall(Arr)
+
+    print("Updated string is : ",Ret)
+
 main()

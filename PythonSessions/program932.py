@@ -1,11 +1,7 @@
-def display():
+def Display():
     print("Inside Display")
     print("End of Display")
-    
-
 
 def main():
-    display()
+    Display()
     print("After Display")
-    
-    

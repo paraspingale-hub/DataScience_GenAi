@@ -1,7 +1,6 @@
-def display():
+def Display():
     print("Inside Display")
     print("End of Display")
-    
 
-display()
+Display()
 print("After Display")

@@ -1,11 +1,13 @@
-def LargestNos(a ,b):
-    if(a > b):
-        print("Greater nos : " ,a)
+def main():
+    print("Enter first number : ")
+    No1 = int(input())
+
+    print("Enter second number : ")
+    No2 = int(input())
+
+    if (No1 > No2):
+        print("Maximum is : ",No1)
     else:
-        print("Greater nos : " ,b)
-        
-def main ():
-   a = int(input("Enter the first nos"))
-   b = int(input("Enter the sec nos "))
-   LargestNos(a ,b)
+        print("Maximum is : ",No2)
+   
 main()

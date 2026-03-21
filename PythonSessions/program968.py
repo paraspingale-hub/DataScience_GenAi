@@ -1,24 +1,18 @@
-def countcapital(brr):
-    icount = 0
+def CountCapital(Brr):
+    iCount = 0
+
+    for i in range(len(Brr)):
+        if(Brr[i] >= 65 and Brr[i] <= 90):  # Issue
+            iCount = iCount + 1
+
+    return iCount
+
+def main():
+    print("Enter string : ")
+    Arr = input() 
+
+    Ret = CountCapital(Arr)
+
+    print("Number of captial characters are : ",Ret)
     
-    for i in range (len(brr)):
-        if(brr[i] >= 65 and brr[i] <= 90):    #issue
-            icount = icount+1
-            
-    return icount
-    
-    
-def main ():
-    print("Enter string")
-    
-    arr = input()
-    
-    print("Enter String is : " ,arr)
-    print(len(arr) , "Is the lenght of the string")
-    
-    ret = countcapital(arr)
-    print(ret)
 main()
-
-
-

@@ -1,33 +1,29 @@
-def Maximum(brr):
-    max = brr[0]
-    for i in range (len(brr)):
-        if (brr[i] > max):
-            max = brr[i]
-    
-    return max
-                
-    return sum 
-    
-    
-def main ():
-    size = 0
-    arr = []
-    
-    print("enter no of elemnt")
-    size = int(input())
-    
+def Maximum(Brr):
+    iMax = Brr[0]
+
+    for i in range(len(Brr)):
+        if(Brr[i] > iMax):
+            iMax = Brr[i]      
+
+    return iMax
+
+def main():
+    Size = 0
+    Arr = []
+
+    print("Enter number of elements : ")
+    Size = int(input())
+
     print("Enter the elements : ")
-    value = 0
-    for i in range (size):
-        Value= int(input())
-        arr.append(Value)
-        
-    ret = Maximum(arr)
-    print("Maximum value  is : " , ret)
-    
-    
 
+    Value = 0
+
+    for i in range(Size):
+        Value = int(input())
+        Arr.append(Value)
+    
+    Ret = Maximum(Arr)
+
+    print("Maximum is : ",Ret)
+    
 main()
-
-
-

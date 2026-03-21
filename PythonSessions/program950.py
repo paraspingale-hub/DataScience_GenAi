@@ -1,18 +1,17 @@
-def Displaydigits(no):
-    digit = 0
-    
-    while(no != 0):
-        digit = no % 10
-        print(digit)
-        no = no / 10
-        
-        
-    
-def main ():
-    no = 0
-    print("Enter the nos")
-    int(input())
-    Displaydigits(no)
-    
-    
+
+def DisplayDigits(No):
+    Digit = 0
+    while(No != 0):
+        Digit = No % 10
+        print(Digit)
+        No = No / 10        # Issue
+
+def main():
+    No = 0
+
+    print("Enter number : ")
+    No = int(input())
+
+    DisplayDigits(No)
+
 main()

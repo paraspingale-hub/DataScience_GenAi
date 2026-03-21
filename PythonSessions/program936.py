@@ -1,16 +1,16 @@
-def main ():
-    no1 = 0
-    no2 = 0
-    ans = 0
+def main():
+    No1 = 0
+    No2 = 0
+    Ans = 0
 
+    print("Enter first number : ")
+    No1 = int(input())
 
-    print("Enter the first nos ")
-    no1 = int(input())
+    print("Enter second number : ")
+    No2 = int(input())
 
-    print("Enter the sec nos ")
-    no2 = int(input())
+    Ans = No1 + No2
 
-    ans = no1 + no2
-    print("Addision is : " ,ans)
-    
+    print("Addition is : ",Ans)
+
 main()

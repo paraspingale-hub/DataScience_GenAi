@@ -1,29 +1,24 @@
-def Togglecase(brr):
-    icount = 0
-    
-    for ch in brr:
-        if(ch >= 'a' and ch <= 'Z'): 
-            result = result + chr((ord(ch) + 32))
+# HeLlo -> hello
+# HELLO -> hello
+# hello -> hello
+
+def ToggleCase(Brr):
+    Result = ""
+
+    for ch in Brr:
+        if(ch >= 'A' and ch <= 'Z'):
+            Result = Result + chr(ord(ch) + 32)
         else:
-            result = result + chr((ord(ch) - 32))
-    return icount
-    
-    
-def main ():
-    
-    print("Enter string")
-    
-    arr = input()
-    
-    print("Enter String is : " ,arr)
-    
-    print(len(arr) , "Is the lenght of the string")
-    
-    ret = Togglecase(arr)
-    
-    print(ret)
-    
+            Result = Result + chr(ord(ch) - 32)
+            
+    return Result
+
+def main():
+    print("Enter string : ")
+    Arr = input() 
+
+    Ret = ToggleCase(Arr)
+
+    print("Updated string is : ",Ret)
+
 main()
-c
-
-

@@ -1,16 +1,9 @@
+def main():
+    print("Enter string : ")
+    Arr = input() 
 
+    print("Entered string is : ",Arr)
     
-def main ():
-    print("Enter string")
-    
-    arr = input()
-    
-    print("Enter String is : " ,arr)
-    print(len(arr) , "Is the lenght of the string")
-    
-    
+    print("Length of string is : ",len(Arr))
     
 main()
-
-
-

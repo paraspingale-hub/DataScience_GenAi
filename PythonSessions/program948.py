@@ -1,20 +1,21 @@
-
-def sumfactors(nos):
-    fact = 0
-    sum = 0
-    for i in range (1 , int((nos/2)+1)):
-        if(nos % i == 0):
-            sum  = sum + i
+def SumFactors(No):
     
-    if(sum == nos):
-        print("It is an perfect nos ")
-    else:
-        print("Not an perfect nos ")
-            
+    iSum = 0
 
-def main ():
-    ino = int(input("Enter  the nos"))
-    sumfactors(ino)
+    for i in range(1, int((No/2)+1)):
+        if(No % i == 0):
+            iSum = iSum + i
+
+    return iSum
+
+def main():
+    Value = 0
+
+    print("Enter number : ")
+    Value = int(input())
+
+    Ret = SumFactors(Value)
     
-        
+    print("Summation of factors : ",Ret)
+
 main()

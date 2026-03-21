@@ -1,17 +1,23 @@
-def SumDigit(no):
-    digit = 0
-    isum = 0
-    while(no != 0):
-        digit = no % 10
-        no = no / 10        
-        isum = isum + digit
-    return isum
-def main ():
-    no = 0
-    print("Enter the nos")
-    int(input())
-    ret = SumDigits(no)
-    print(ret)
+def SumDigits(No):
     
+    Digit = 0
+    iSum = 0
+
+    while(No != 0):
+        Digit = No % 10
+        iSum = iSum + Digit
+        No = No // 10
+
+    return iSum
+
+def main():
+    No = 0
+
+    print("Enter number : ")
+    No = int(input())
+
+    Ret = SumDigits(No)
+
+    print("Summation of digits : ",Ret)
     
 main()

@@ -1,14 +1,15 @@
-
-def CheckEven(nos):
-    if nos % 2 ==0:
-        print("ItIs an evern nos ")
+def CheckEven(No):
+    if(No % 2 == 0):
+        print("It is Even number")
     else:
-        print("It is not an even nos")
-    
+        print("It is Odd number")
 
-def main ():
-    ino = int(input("Enter  the nos"))
-    CheckEven(ino)
+def main():
+    Value = 0
+
+    print("Enter number : ")
+    Value = int(input())
+
+    CheckEven(Value)
     
-        
 main()

@@ -1,13 +1,15 @@
-
-def factors(nos):
-    fact = 0
-    for i in range (1 , int((nos/2)+1)):
-        if(nos % i == 0):
+def DisplayFactors(No):
+    
+    for i in range(1, int((No/2)+1)):
+        if(No % i == 0):
             print(i)
 
-def main ():
-    ino = int(input("Enter  the nos"))
-    factors(ino)
+def main():
+    Value = 0
+
+    print("Enter number : ")
+    Value = int(input())
+
+    DisplayFactors(Value)
     
-        
 main()

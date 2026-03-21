@@ -1,24 +1,24 @@
-
-def checkperfect(nos):
-    fact = 0
-    sum = 0
-    for i in range (1 , int((nos/2)+1)):
-        if(nos % i == 0):
-            sum  = sum + i
+def CheckPerfect(No):
     
-    return sum == nos
-            
+    iSum = 0
 
-def main ():
-    ino = int(input("Enter  the nos"))
+    for i in range(1, int((No/2)+1)):
+        if(No % i == 0):
+            iSum = iSum + i
 
+    return (iSum == No)
+
+def main():
+    Value = 0
+
+    print("Enter number : ")
+    Value = int(input())
+
+    Ret = CheckPerfect(Value)
     
-    sumation = checkperfect(ino)
-    
-    if(sumation == True):
-        print("It is a perfect nos ")
+    if(Ret == True):
+        print("It is perfect number")
     else:
-        print("Not a perfect nos ")c
-    
-        
+        print("It is not a perfect number")
+
 main()
