@@ -1,0 +1,63 @@
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import BaggingClassifier
+from sklearn.metrics import accuracy_score , confusion_matrix , classification_report
+
+#-------------------------------------------------------------------------------------------------
+#STEP 1 : Load the data set
+#-------------------------------------------------------------------------------------------------
+
+df = pd.read_csv("breast_cancer.csv")
+print(df.shape)
+print(":: Classification ::")
+
+#-------------------------------------------------------------------------------------------------
+#STEP 2 : Split the Data
+#-------------------------------------------------------------------------------------------------
+
+X = (df.drop("target" ,axis = 1 ))
+Y = (df["target"])
+
+#-------------------------------------------------------------------------------------------------
+#STEP 3 : Split for testing an training 
+#-------------------------------------------------------------------------------------------------
+
+X_train , X_test , Y_train ,Y_test = train_test_split(X ,Y ,test_size=0.2)
+
+#-------------------------------------------------------------------------------------------------
+#STEP 4 : Create Base Model 
+#-------------------------------------------------------------------------------------------------
+
+Base_model = DecisionTreeClassifier(random_state=42)
+
+#-------------------------------------------------------------------------------------------------
+#STEP 5 : Creating Bagging Model
+#-------------------------------------------------------------------------------------------------
+
+Bagging_model = BaggingClassifier(estimator=Base_model, n_estimators=10 ,random_state=42)
+
+#khutla model ghe -> desigentreeClassifier
+# 10 model bantil hite,
+
+#-------------------------------------------------------------------------------------------------
+#STEP 6 : Training Dataset
+#-------------------------------------------------------------------------------------------------
+
+Bagging_model.fit(X_train , Y_train)
+
+#-------------------------------------------------------------------------------------------------
+#STEP 7 : Test Dataset
+#-------------------------------------------------------------------------------------------------
+
+
+y_pred = Bagging_model.predict(X_test)
+
+#-------------------------------------------------------------------------------------------------
+#STEP 8 : Accuracy Calculation 
+#-------------------------------------------------------------------------------------------------
+
+print("Bagging Accuracy  : " , accuracy_score(Y_test , y_pred))
+print("Confussion matrix : ")
+print(confusion_matrix(Y_test , y_pred))
