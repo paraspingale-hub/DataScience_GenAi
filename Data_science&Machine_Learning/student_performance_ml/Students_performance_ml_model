@@ -1,0 +1,587 @@
+"""
+Student Performance Classifier — Multi-Algorithm Pipeline
+==========================================================
+Author  : [Paras Rahul Pingale]
+Version : 2.0.0
+Purpose : Train, benchmark, and auto-select the best classifier
+          for student performance prediction.
+
+Algorithms benchmarked
+----------------------
+1. Logistic Regression   — fast interpretable baseline
+2. Random Forest         — robust ensemble, native feature importance
+3. XGBoost               — gradient boosting, highest raw accuracy
+4. Support Vector Machine— strong on small/medium tabular datasets
+5. KNN                   — included for comparison (original model)
+
+Pipeline per algorithm
+----------------------
+  StandardScaler → Classifier → CV scoring → Holdout evaluation
+
+Winner selection
+----------------
+  Best mean CV accuracy across 5-fold CV wins.
+  Final model is retrained on full training set.
+
+Industry practices
+------------------
+  - sklearn Pipeline        (zero data leakage)
+  - Stratified split        (preserves class balance)
+  - 5-fold cross-validation (reliable score estimates)
+  - classification_report   (precision / recall / F1)
+  - SHAP values             (XGBoost explainability)
+  - Permutation importance  (model-agnostic fallback)
+  - Logging                 (replaces bare prints)
+  - Type hints              (readability & IDE support)
+  - __main__ guard          (safe to import as module)
+"""
+
+
+
+import logging
+import sys
+import warnings
+from pathlib import Path
+from typing import Any
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.inspection import permutation_importance
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+)
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.svm import SVC
+
+warnings.filterwarnings("ignore")
+
+# ---------------------------------------------------------------------------
+# Optional — XGBoost (graceful fallback if not installed)
+# ---------------------------------------------------------------------------
+try:
+    from xgboost import XGBClassifier
+    XGBOOST_AVAILABLE = True
+except ImportError:
+    XGBOOST_AVAILABLE = False
+
+# ---------------------------------------------------------------------------
+# Optional — SHAP (for XGBoost explainability)
+# ---------------------------------------------------------------------------
+try:
+    import shap
+    SHAP_AVAILABLE = True
+except ImportError:
+    SHAP_AVAILABLE = False
+
+# ---------------------------------------------------------------------------
+# Config — change these to suit your dataset
+# ---------------------------------------------------------------------------
+DATA_PATH    : str   = "student_performance_ml.csv"
+TARGET_COL   : str   = "FinalResult"
+TEST_SIZE    : float = 0.2
+RANDOM_STATE : int   = 42
+CV_FOLDS     : int   = 5
+KNN_K_RANGE  : range = range(1, 26)
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s | %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+log = logging.getLogger(__name__)
+
+SEP  = "=" * 60
+SEP2 = "-" * 60
+
+
+# ===========================================================================
+# 1. Data loading & validation
+# ===========================================================================
+def load_data(path: str) -> pd.DataFrame:
+    fp = Path(path)
+    if not fp.exists():
+        raise FileNotFoundError(f"Dataset not found: {fp.resolve()}")
+
+    df = pd.read_csv(fp)
+    log.info("Dataset loaded  →  shape: %s", df.shape)
+
+    if TARGET_COL not in df.columns:
+        raise ValueError(f"Target column '{TARGET_COL}' not in dataset.")
+
+    return df
+
+
+# ===========================================================================
+# 2. Exploratory Data Analysis
+# ===========================================================================
+def run_eda(df: pd.DataFrame) -> None:
+    log.info("\n%s\n  EXPLORATORY DATA ANALYSIS\n%s", SEP, SEP)
+    log.info("\nFirst 5 rows:\n%s", df.head().to_string())
+    log.info("\nDescriptive statistics:\n%s", df.describe(include="all").to_string())
+
+    null_counts = df.isnull().sum()
+    log.info(
+        "\nNull values:\n%s",
+        null_counts[null_counts > 0].to_string()
+        if null_counts.any() else "  None — clean dataset",
+    )
+    log.info("\nClass distribution:\n%s", df[TARGET_COL].value_counts().to_string())
+
+    # Numeric highlights
+    for col, label in [("StudyHours", "Avg StudyHours"), ("Attendance", "Avg Attendance")]:
+        if col in df.columns:
+            log.info("%s : %.2f", label, df[col].mean())
+    if "PreviousScore" in df.columns:
+        log.info("Max PreviousScore : %.2f", df["PreviousScore"].max())
+
+
+# ===========================================================================
+# 3. Pre-processing
+# ===========================================================================
+def preprocess(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
+    """Encode categoricals, impute nulls, split X / y."""
+    df = df.copy()
+
+    # Encode categorical feature columns
+    cat_cols = [c for c in df.select_dtypes(include="object").columns if c != TARGET_COL]
+    if cat_cols:
+        log.info("Encoding categorical columns: %s", cat_cols)
+        le = LabelEncoder()
+        for col in cat_cols:
+            df[col] = le.fit_transform(df[col].astype(str))
+
+    # Encode target if categorical
+    if df[TARGET_COL].dtype == object:
+        le_target = LabelEncoder()
+        df[TARGET_COL] = le_target.fit_transform(df[TARGET_COL].astype(str))
+        log.info("Target mapping: %s", dict(enumerate(le_target.classes_)))
+
+    # Impute nulls with column median
+    if df.isnull().sum().any():
+        log.warning("Nulls detected — imputing with column medians.")
+        df.fillna(df.median(numeric_only=True), inplace=True)
+
+    X = df.drop(TARGET_COL, axis=1)
+    y = df[TARGET_COL]
+    log.info("Features: %s  |  Target: %s", X.shape, y.shape)
+    return X, y
+
+
+# ===========================================================================
+# 4. Build algorithm registry
+# ===========================================================================
+def build_algorithm_registry(
+    X_train_scaled: np.ndarray,
+    y_train: pd.Series,
+) -> dict[str, Any]:
+    """
+    Return a dict of algorithm_name → sklearn estimator (already tuned).
+    KNN K is tuned via CV; others use sensible production defaults.
+    """
+    # ── Tune KNN K ──────────────────────────────────────────────────────────
+    log.info("\n%s\n  Tuning KNN (K = 1–%d) …\n%s", SEP2, KNN_K_RANGE.stop - 1, SEP2)
+    best_k, best_knn_score = 1, 0.0
+    knn_cv_scores: dict[int, float] = {}
+
+    for k in KNN_K_RANGE:
+        score = cross_val_score(
+            KNeighborsClassifier(n_neighbors=k),
+            X_train_scaled, y_train,
+            cv=CV_FOLDS, scoring="accuracy",
+        ).mean()
+        knn_cv_scores[k] = score
+        if score > best_knn_score:
+            best_k, best_knn_score = k, score
+
+    log.info("Best KNN K = %d  (CV accuracy = %.4f)", best_k, best_knn_score)
+
+    # Plot KNN CV curve
+    plt.figure(figsize=(9, 3.5))
+    sns.lineplot(x=list(knn_cv_scores.keys()), y=list(knn_cv_scores.values()),
+                 marker="o", color="#2563EB", linewidth=2)
+    plt.axvline(best_k, color="#DC2626", linestyle="--", linewidth=1.5,
+                label=f"Best K = {best_k}")
+    plt.xlabel("K"); plt.ylabel("Mean CV accuracy")
+    plt.title("KNN — Cross-validation accuracy by K")
+    plt.legend(); plt.tight_layout()
+    plt.savefig("plot_knn_cv.png", dpi=150); plt.show()
+    log.info("Saved → plot_knn_cv.png")
+
+    # ── Registry ────────────────────────────────────────────────────────────
+    registry: dict[str, Any] = {
+        "Logistic Regression": LogisticRegression(
+            max_iter=1000,
+            random_state=RANDOM_STATE,
+            class_weight="balanced",
+        ),
+        "Random Forest": RandomForestClassifier(
+            n_estimators=300,
+            max_depth=None,
+            min_samples_leaf=2,
+            random_state=RANDOM_STATE,
+            class_weight="balanced",
+            n_jobs=-1,
+        ),
+        "SVM": SVC(
+            kernel="rbf",
+            C=1.0,
+            probability=True,
+            random_state=RANDOM_STATE,
+            class_weight="balanced",
+        ),
+        "KNN": KNeighborsClassifier(
+            n_neighbors=best_k,
+            metric="euclidean",
+        ),
+    }
+
+    if XGBOOST_AVAILABLE:
+        registry["XGBoost"] = XGBClassifier(
+            n_estimators=300,
+            learning_rate=0.05,
+            max_depth=6,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            use_label_encoder=False,
+            eval_metric="mlogloss",
+            random_state=RANDOM_STATE,
+            n_jobs=-1,
+        )
+    else:
+        log.warning("XGBoost not installed — skipping. Run: pip install xgboost")
+
+    return registry
+
+
+# ===========================================================================
+# 5. Benchmark all algorithms via cross-validation
+# ===========================================================================
+def benchmark_algorithms(
+    registry: dict[str, Any],
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+) -> pd.DataFrame:
+    """
+    Run CV_FOLDS-fold CV for every algorithm inside a Pipeline.
+    Returns a DataFrame of results sorted by mean CV accuracy.
+    """
+    log.info("\n%s\n  BENCHMARKING ALL ALGORITHMS (%d-fold CV)\n%s", SEP, CV_FOLDS, SEP)
+
+    results: list[dict] = []
+
+    for name, estimator in registry.items():
+        pipeline = Pipeline([
+            ("scaler", StandardScaler()),
+            ("clf",    estimator),
+        ])
+        scores = cross_val_score(
+            pipeline, X_train, y_train,
+            cv=CV_FOLDS, scoring="accuracy", n_jobs=-1,
+        )
+        results.append({
+            "Algorithm" : name,
+            "Mean CV"   : scores.mean(),
+            "Std CV"    : scores.std(),
+            "Min CV"    : scores.min(),
+            "Max CV"    : scores.max(),
+        })
+        log.info(
+            "  %-22s  mean=%.4f  std=%.4f  min=%.4f  max=%.4f",
+            name, scores.mean(), scores.std(), scores.min(), scores.max(),
+        )
+
+    results_df = (
+        pd.DataFrame(results)
+        .sort_values("Mean CV", ascending=False)
+        .reset_index(drop=True)
+    )
+
+    log.info("\nRanking:\n%s", results_df.to_string(index=False))
+
+    # ── Plot benchmark ───────────────────────────────────────────────────────
+    plt.figure(figsize=(9, 4))
+    colors = ["#16a34a" if i == 0 else "#2563EB" for i in range(len(results_df))]
+    bars = plt.barh(
+        results_df["Algorithm"][::-1],
+        results_df["Mean CV"][::-1],
+        xerr=results_df["Std CV"][::-1],
+        color=colors[::-1],
+        edgecolor="none",
+        height=0.55,
+    )
+    plt.xlabel("Mean CV accuracy")
+    plt.title(f"Algorithm benchmark ({CV_FOLDS}-fold CV)")
+    plt.xlim(
+        max(0, results_df["Mean CV"].min() - 0.05),
+        min(1.0, results_df["Mean CV"].max() + 0.05),
+    )
+    for bar, val in zip(bars, results_df["Mean CV"][::-1]):
+        plt.text(
+            bar.get_width() + 0.003, bar.get_y() + bar.get_height() / 2,
+            f"{val:.4f}", va="center", fontsize=10,
+        )
+    plt.tight_layout()
+    plt.savefig("plot_benchmark.png", dpi=150); plt.show()
+    log.info("Saved → plot_benchmark.png")
+
+    return results_df
+
+
+# ===========================================================================
+# 6. Train & evaluate the winning algorithm on the holdout test set
+# ===========================================================================
+def evaluate_winner(
+    winner_name: str,
+    registry: dict[str, Any],
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    y_train: pd.Series,
+    y_test: pd.Series,
+) -> Pipeline:
+    """Fit winner pipeline on full train set, evaluate on held-out test set."""
+    log.info("\n%s\n  WINNER: %s\n%s", SEP, winner_name, SEP)
+
+    pipeline = Pipeline([
+        ("scaler", StandardScaler()),
+        ("clf",    registry[winner_name]),
+    ])
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_test)
+
+    log.info("Test accuracy : %.4f", accuracy_score(y_test, y_pred))
+    log.info("\nClassification report:\n%s", classification_report(y_test, y_pred))
+
+    # Confusion matrix
+    fig, ax = plt.subplots(figsize=(6, 5))
+    ConfusionMatrixDisplay(confusion_matrix(y_test, y_pred)).plot(
+        ax=ax, colorbar=False, cmap="Blues"
+    )
+    ax.set_title(f"Confusion Matrix — {winner_name}")
+    plt.tight_layout()
+    plt.savefig("plot_confusion_matrix.png", dpi=150); plt.show()
+    log.info("Saved → plot_confusion_matrix.png")
+
+    return pipeline
+
+
+# ===========================================================================
+# 7. Feature importance — model-aware strategy
+# ===========================================================================
+def plot_feature_importance(
+    winner_name: str,
+    pipeline: Pipeline,
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+) -> None:
+    """
+    Use the best available strategy per algorithm:
+      - Random Forest / XGBoost → native feature_importances_
+      - XGBoost (if SHAP available) → SHAP summary plot
+      - All others → permutation importance
+    """
+    clf        = pipeline.named_steps["clf"]
+    scaler     = pipeline.named_steps["scaler"]
+    X_test_s   = scaler.transform(X_test)
+    feat_names = X_train.columns.tolist()
+
+    log.info("\n%s\n  FEATURE IMPORTANCE  (%s)\n%s", SEP2, winner_name, SEP2)
+
+    # ── SHAP (XGBoost only) ─────────────────────────────────────────────────
+    if winner_name == "XGBoost" and SHAP_AVAILABLE:
+        log.info("Using SHAP values for explainability.")
+        explainer   = shap.TreeExplainer(clf)
+        shap_values = explainer.shap_values(X_test_s)
+
+        plt.figure(figsize=(9, 5))
+        shap.summary_plot(shap_values, X_test_s, feature_names=feat_names,
+                          show=False, plot_size=(9, 5))
+        plt.title("SHAP feature importance — XGBoost")
+        plt.tight_layout()
+        plt.savefig("plot_shap.png", dpi=150); plt.show()
+        log.info("Saved → plot_shap.png")
+        return
+
+    # ── Native importances (tree-based models) ───────────────────────────────
+    if hasattr(clf, "feature_importances_"):
+        importance_df = (
+            pd.DataFrame({"feature": feat_names, "importance": clf.feature_importances_})
+            .sort_values("importance", ascending=False)
+            .reset_index(drop=True)
+        )
+        log.info("\nNative feature importances:\n%s", importance_df.to_string(index=False))
+
+        plt.figure(figsize=(8, 4))
+        sns.barplot(data=importance_df, x="importance", y="feature", color="#2563EB")
+        plt.xlabel("Importance score")
+        plt.title(f"Feature importance — {winner_name}")
+        plt.tight_layout()
+        plt.savefig("plot_feature_importance.png", dpi=150); plt.show()
+        log.info("Saved → plot_feature_importance.png")
+        return
+
+    # ── Permutation importance (model-agnostic fallback) ─────────────────────
+    log.info("Using permutation importance (model-agnostic).")
+    perm = permutation_importance(
+        clf, X_test_s, y_test,
+        n_repeats=15,
+        random_state=RANDOM_STATE,
+        n_jobs=-1,
+    )
+    importance_df = (
+        pd.DataFrame({
+            "feature"   : feat_names,
+            "importance": perm.importances_mean,
+            "std"       : perm.importances_std,
+        })
+        .sort_values("importance", ascending=False)
+        .reset_index(drop=True)
+    )
+    log.info("\nPermutation importances:\n%s", importance_df.to_string(index=False))
+
+    plt.figure(figsize=(8, 4))
+    sns.barplot(
+        data=importance_df, x="importance", y="feature",
+        xerr=importance_df["std"].values, color="#2563EB",
+    )
+    plt.xlabel("Mean accuracy decrease")
+    plt.title(f"Permutation feature importance — {winner_name}")
+    plt.tight_layout()
+    plt.savefig("plot_feature_importance.png", dpi=150); plt.show()
+    log.info("Saved → plot_feature_importance.png")
+
+
+# ===========================================================================
+# 8. Compare all algorithms on the test set (secondary analysis)
+# ===========================================================================
+def full_test_comparison(
+    registry: dict[str, Any],
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    y_train: pd.Series,
+    y_test: pd.Series,
+) -> None:
+    """Train every algorithm on the full train set and report test accuracy."""
+    log.info("\n%s\n  FULL TEST SET COMPARISON\n%s", SEP, SEP)
+
+    rows: list[dict] = []
+    for name, estimator in registry.items():
+        pipe = Pipeline([("scaler", StandardScaler()), ("clf", estimator)])
+        pipe.fit(X_train, y_train)
+        acc = accuracy_score(y_test, pipe.predict(X_test))
+        rows.append({"Algorithm": name, "Test Accuracy": acc})
+        log.info("  %-22s  test accuracy = %.4f", name, acc)
+
+    comp_df = pd.DataFrame(rows).sort_values("Test Accuracy", ascending=False)
+
+    plt.figure(figsize=(9, 4))
+    colors = ["#16a34a" if i == 0 else "#2563EB"
+              for i in range(len(comp_df))]
+    bars = plt.barh(
+        comp_df["Algorithm"][::-1],
+        comp_df["Test Accuracy"][::-1],
+        color=colors[::-1],
+        edgecolor="none",
+        height=0.55,
+    )
+    for bar, val in zip(bars, comp_df["Test Accuracy"][::-1]):
+        plt.text(
+            bar.get_width() + 0.003, bar.get_y() + bar.get_height() / 2,
+            f"{val:.4f}", va="center", fontsize=10,
+        )
+    plt.xlabel("Test accuracy")
+    plt.title("All algorithms — holdout test set accuracy")
+    plt.xlim(
+        max(0, comp_df["Test Accuracy"].min() - 0.05),
+        min(1.0, comp_df["Test Accuracy"].max() + 0.05),
+    )
+    plt.tight_layout()
+    plt.savefig("plot_test_comparison.png", dpi=150); plt.show()
+    log.info("Saved → plot_test_comparison.png")
+
+
+# ===========================================================================
+# 9. Inference helper
+# ===========================================================================
+def predict_single(pipeline: Pipeline, sample: dict) -> int | str:
+    """
+    Predict class for a single student record.
+
+    Example
+    -------
+    predict_single(pipeline, {"StudyHours": 7, "Attendance": 90, "PreviousScore": 78})
+    """
+    prediction = pipeline.predict(pd.DataFrame([sample]))[0]
+    log.info("Prediction for %s  →  %s", sample, prediction)
+    return prediction
+
+
+# ===========================================================================
+# Entry point
+# ===========================================================================
+def main() -> None:
+
+    # 1. Load
+    df = load_data(DATA_PATH)
+
+    # 2. EDA
+    run_eda(df)
+
+    # 3. Pre-process
+    X, y = preprocess(df)
+
+    # 4. Stratified train / test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y,
+        test_size=TEST_SIZE,
+        random_state=RANDOM_STATE,
+        stratify=y,
+    )
+    log.info("Train: %d  |  Test: %d", len(X_train), len(X_test))
+
+    # 5. Scale X_train once for KNN K-tuning
+    _scaler      = StandardScaler()
+    X_train_s    = _scaler.fit_transform(X_train)
+
+    # 6. Build algorithm registry (tunes KNN K internally)
+    registry = build_algorithm_registry(X_train_s, y_train)
+
+    # 7. Benchmark — CV scores decide the winner
+    results_df   = benchmark_algorithms(registry, X_train, y_train)
+    winner_name  = results_df.iloc[0]["Algorithm"]
+    log.info("\nWinner (highest mean CV): %s", winner_name)
+
+    # 8. Train winner on full train set → evaluate on test set
+    best_pipeline = evaluate_winner(
+        winner_name, registry,
+        X_train, X_test, y_train, y_test,
+    )
+
+    # 9. Feature importance for the winning model
+    plot_feature_importance(winner_name, best_pipeline, X_train, X_test, y_test)
+
+    # 10. Compare every algorithm on test set (full picture)
+    full_test_comparison(registry, X_train, X_test, y_train, y_test)
+
+    # 11. Example inference on a single student
+    sample = {col: float(X.iloc[0][col]) for col in X.columns}
+    predict_single(best_pipeline, sample)
+
+    log.info("\n%s\n  DONE — 5 plots saved to current directory\n%s", SEP, SEP)
+
+
+if __name__ == "__main__":
+    main()
