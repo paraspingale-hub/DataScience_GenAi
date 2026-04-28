@@ -1,31 +1,27 @@
-#implementing linear regression manually 
+#implementing linear regression manually
+
+import numpy as np 
 
 #Loading dataset 
 x = [1.0,2.0,3.0,4.0,5.0]
 y = [3.0,4.0,2.0,4.0,5.0]
 
-#Calculating mean of 'x' 
-MeanX = sum(x) / len(x)
-print(MeanX) 
+# Calculate means
+x_mean = np.mean(x)
+y_mean = np.mean(y)
 
-#Calculating mean of 'y'
-MeanY = sum(y) / len(y)
-print(MeanY)
+print(f"Mean of x = {x_mean} Meand of y = {y_mean}")
 
-#Calculating slope
-sumX = 0
-for i in x : 
-    
-    xCalculations = i - MeanX
-    sumX = sumX + xCalculations
-print(sumX)
+# Calculate slope numerator and denominator
+numerator = np.sum((x - x_mean) * (y - y_mean))
+denominator = np.sum((x - x_mean)**2)
+slope = numerator / denominator
+
+print(f"Slope of the given data = {slope}")
+
+#calculating the intercept 
+intercept = y_mean - slope * x_mean
+print(intercept)
 
 
-sumY = 0
-for i in y :
-    yCalculation = i - MeanY
-    sumY = sumY + yCalculation
-print(sumY)
-    
-slope = (sumX * sumY) 
-print(slope)
+
