@@ -83,7 +83,7 @@ print(classification_report(y_test, y_pred, zero_division=0))
 # ------------------------------------------------------------
 # Step 8: Predict new student
 # ------------------------------------------------------------
-new_student = [[5, 75, 60]]
+new_student = [[20,0,100]]
 new_student_scaled = scaler.transform(new_student)
 
 prediction = model.predict(new_student_scaled)
