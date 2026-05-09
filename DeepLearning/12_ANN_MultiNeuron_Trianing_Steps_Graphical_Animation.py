@@ -91,7 +91,7 @@ for step in range(1, 51):
     print(f"h1 = ReLU(z1) = {h1:.4f}")
 
     # -----------------------------------------------------
-    # FORWARD PASS - HIDDEN NEURON 2
+    # FORWARD PASS - HIDDEN NEURON 2 
     # -----------------------------------------------------
     z2 = (x1 * w21) + (x2 * w22) + b2
     h2 = max(0, z2)   # ReLU
