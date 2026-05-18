@@ -1,10 +1,10 @@
 # =========================================================
-#              Marvellous Infosystems
+#                   Your Intervier
 # =========================================================
 # Project Name : Intelligent Document Question Answering System
 #                using RAG and Large Language Models
 #
-# Author       : Piyush Manohar Khairnar
+# Author       : Paras Rahul Pingale
 # Date         : 09/05/2026
 #
 # Description  :
@@ -26,9 +26,9 @@ from sentence_transformers import SentenceTransformer
 
 
 # =========================================================
-#              Marvellous Infosystems
+#              Your Intervier
 # Function Name : extract_text_from_pdf
-# Author        : Piyush Manohar Khairnar
+# Author        : Paras Rahul Pingale
 # Date          : 09/05/2026
 # Description   : Extracts readable text from uploaded PDF file.
 # Input         : Uploaded PDF file object
@@ -54,9 +54,9 @@ def extract_text_from_pdf(pdf_file):
 
 
 # =========================================================
-#              Marvellous Infosystems
+#              Your Intervier
 # Function Name : split_text_into_chunks
-# Author        : Piyush Manohar Khairnar
+# Author        : Paras Rahul Pingale
 # Date          : 09/05/2026
 # Description   : Splits large PDF text into smaller overlapping chunks.
 # Input         : Text, chunk size, overlap size
@@ -80,9 +80,9 @@ def split_text_into_chunks(text, chunk_size=500, overlap=100):
 
 
 # =========================================================
-#              Marvellous Infosystems
+#              Your Intervier
 # Function Name : load_embedding_model
-# Author        : Piyush Manohar Khairnar
+# Author        : Paras Rahul Pingale
 # Date          : 09/05/2026
 # Description   : Loads Sentence Transformer model only once.
 # Input         : None
@@ -95,9 +95,9 @@ def load_embedding_model():
 
 
 # =========================================================
-#              Marvellous Infosystems
+#              Your Intervier
 # Function Name : create_vector_database
-# Author        : Piyush Manohar Khairnar
+# Author        : Paras Rahul Pingale
 # Date          : 09/05/2026
 # Description   : Converts chunks into embeddings and stores them in FAISS.
 # Input         : Text chunks and embedding model
@@ -119,9 +119,9 @@ def create_vector_database(chunks, embedding_model):
 
 
 # =========================================================
-#              Marvellous Infosystems
+#              Your Intervier
 # Function Name : search_relevant_chunks
-# Author        : Piyush Manohar Khairnar
+# Author        : Paras Rahul Pingale
 # Date          : 09/05/2026
 # Description   : Retrieves top matching PDF chunks for user question.
 # Input         : Question, chunks, FAISS index, embedding model, top_k
@@ -145,9 +145,9 @@ def search_relevant_chunks(question, chunks, index, embedding_model, top_k=3):
 
 
 # =========================================================
-#              Marvellous Infosystems
+#              Your Intervier
 # Function Name : ask_llm
-# Author        : Piyush Manohar Khairnar
+# Author        : Paras Rahul Pingale
 # Date          : 09/05/2026
 # Description   : Sends context and question to local LLM using Ollama.
 # Input         : User question and retrieved context
@@ -156,7 +156,7 @@ def search_relevant_chunks(question, chunks, index, embedding_model, top_k=3):
 
 def ask_llm(question, context):
     prompt = f"""
-You are an intelligent document question answering assistant created for Marvellous Infosystems.
+You are an intelligent document question answering assistant created for Your Intervier.
 
 Project:
 Intelligent Document Question Answering System using RAG and Large Language Models.
@@ -202,9 +202,9 @@ Answer:
 
 
 # =========================================================
-#              Marvellous Infosystems
+#              Your Intervier
 # Function Name : show_project_flow
-# Author        : Piyush Manohar Khairnar
+# Author        : Paras Rahul Pingale
 # Date          : 09/05/2026
 # Description   : Displays RAG project flow on Streamlit UI.
 # Input         : None
@@ -242,14 +242,14 @@ def show_project_flow():
 
 
 # =========================================================
-#              Marvellous Infosystems
+#              Your Intervier
 # Streamlit Web Application
-# Author        : Piyush Manohar Khairnar
+# Author        : Paras Rahul Pingale
 # Date          : 09/05/2026
 # =========================================================
 
 st.set_page_config(
-    page_title="Marvellous Infosystems | Intelligent Document QA System",
+    page_title="Your Intervier | Intelligent Document QA System",
     page_icon="📘",
     layout="wide"
 )
@@ -404,7 +404,7 @@ header {
 # ------------------ Header Section ------------------
 
 st.markdown(
-    '<div class="main-title">Marvellous Infosystems</div>',
+    '<div class="main-title">Your Intervier</div>',
     unsafe_allow_html=True
 )
 
@@ -416,7 +416,7 @@ st.markdown(
 st.markdown("""
 <div class="brand-box">
 
-<b>Author:</b> Piyush Manohar Khairnar<br><br>
+<b>Author:</b> Paras Rahul Pingale<br><br>
 
 <b>Date:</b> 09/05/2026<br><br>
 
@@ -594,9 +594,9 @@ with tab3:
 st.markdown("""
 <div class="footer">
 <hr>
-<b>Marvellous Infosystems</b><br>
+<b>Your Intervier</b><br>
 आम्ही Technical संस्कार करतो !!!<br>
-Project developed by Piyush Manohar Khairnar | Date: 09/05/2026
+Project developed by Paras Rahul Pingale | Date: 09/05/2026
 </div>
 """, unsafe_allow_html=True)
 

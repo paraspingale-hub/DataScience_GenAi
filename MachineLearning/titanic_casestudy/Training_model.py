@@ -7,8 +7,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix , accuracy_score
 
-
-
 #----------------------------------------------------------------------------------------------------------------
 #
 #   Funcation name :    train_model
@@ -52,16 +50,6 @@ def trian_model(df):
         print(feature , " : " , coefficient)
         
     
-    
-    
-    
-    
-
-
-
-         
-
-
 #----------------------------------------------------------------------------------------------------------------
 #
 #   Funcation name :    Displayinfo
@@ -78,8 +66,6 @@ def DisplayInfo(title):
     print(title)
     print("=" * 80)
     
-
-
 #----------------------------------------------------------------------------------------------------------------
 #
 #   Funcation name :    Showdata
@@ -242,9 +228,6 @@ def MarvellousTitanicLogistics(datapath):
     df = CleanTitanicdata(df)
     
     trian_model(df)
-    
-   
-    
 
 
 #----------------------------------------------------------------------------------------------------------------
@@ -260,9 +243,6 @@ def MarvellousTitanicLogistics(datapath):
 
 def main ():
     MarvellousTitanicLogistics("MarvellousTitanicDataset.csv")
-    
-
-
 
 
 if __name__ == "__main__":
